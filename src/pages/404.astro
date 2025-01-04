@@ -1,0 +1,25 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Root from '../layouts/Root.astro';
+---
+
+<Root>
+  <Navbar />
+  <div class="flex flex-col gap-4 pb-4 pt-24">
+    <div
+      class="rounded-lg bg-gradient-to-br from-[hsl(30,20%,97%)] to-[hsl(30,20%,94%)] px-4 py-16 lg:px-0"
+    >
+      <div class="mx-auto flex max-w-lg flex-col justify-center gap-4">
+        <p class="font-mono text-6xl">404</p>
+        <p>
+          Looks like that url doesn't exist. Let's head back to a defined route.
+        </p>
+        <a
+          href="/"
+          class="w-fit rounded-md bg-[hsl(130,43%,68%)] px-4 py-2 hover:bg-[hsl(130,43%,58%)]"
+          >Back to '/'</a
+        >
+      </div>
+    </div>
+  </div>
+</Root>

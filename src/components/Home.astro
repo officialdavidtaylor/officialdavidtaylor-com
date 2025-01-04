@@ -1,6 +1,13 @@
-<div class="flex flex-col gap-4 pt-[10%]">
+---
+import { getCollection } from 'astro:content';
+import RecipeCard from './RecipeCard.astro';
+
+const allRecipes = await getCollection('recipes');
+---
+
+<div class="flex flex-col gap-4 pb-4 pt-[10%]">
   <div
-    class="rounded-lg bg-gradient-to-br from-[hsl(30,20%,96%)] to-[hsl(30,20%,94%)] px-4 py-16 lg:px-0"
+    class="rounded-lg bg-gradient-to-br from-[hsl(30,20%,97%)] to-[hsl(30,20%,94%)] px-4 py-16 lg:px-0"
   >
     <div class="mx-auto flex max-w-lg flex-col justify-center gap-4">
       <p class="pb-4 font-display text-3xl">welcome~</p>
@@ -19,7 +26,16 @@
     </div>
   </div>
 
-  <hr class="my-4" />
+  <hr />
+
+  <ul
+    id="content-grid"
+    class="grid auto-rows-auto grid-cols-1 gap-4 md:grid-cols-2"
+  >
+    {allRecipes.map((recipe) => <RecipeCard recipe={recipe} />)}
+  </ul>
+
+  <hr />
 
   <div
     class="rounded-lg bg-gradient-to-tr from-[hsl(136,53%,95%)] to-[hsl(136,53%,85%)] px-4 py-12 lg:px-0"

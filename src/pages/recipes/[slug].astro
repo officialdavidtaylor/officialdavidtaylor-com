@@ -1,0 +1,31 @@
+---
+import Navbar from '../../components/Navbar.astro';
+import Root from '../../layouts/Root.astro';
+
+import { getCollection, render } from 'astro:content';
+// 1. Generate a new path for every collection entry
+export async function getStaticPaths() {
+  const recipes = await getCollection('recipes');
+
+  return recipes.map((recipe) => ({
+    params: { slug: recipe.id },
+    props: { recipe },
+  }));
+}
+
+const { recipe } = Astro.props;
+const { Content } = await render(recipe);
+---
+
+<Root>
+  <Navbar />
+  <article class="flex flex-col gap-8 pb-8">
+    <h1>{recipe.data.title}</h1>
+    <p>{recipe.data.description}</p>
+    <div
+      class="prose prose-h1:font-display prose-h1:text-xl prose-a:text-blue-600 prose-p:text-justify prose-img:rounded-xl"
+    >
+      <Content />
+    </div>
+  </article>
+</Root>
