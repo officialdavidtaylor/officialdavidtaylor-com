@@ -1,0 +1,18 @@
+---
+interface Props {
+  title: string;
+  subtitle: string;
+  href: string;
+  themeColor?: `#${string}`;
+}
+
+const { title, subtitle, href } = Astro.props;
+---
+
+<a
+  href={href}
+  class="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-gradient-to-r from-white via-neutral-50 to-neutral-200 p-6"
+>
+  <h3 class="font-serif text-2xl">{title}</h3>
+  <p class="font-sans text-lg text-neutral-400">{subtitle}</p>
+</a>

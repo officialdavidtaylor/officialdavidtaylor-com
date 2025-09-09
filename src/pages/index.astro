@@ -1,10 +1,44 @@
 ---
-import Home from '../components/Home.astro';
-import Navbar from '../components/Navbar.astro';
 import Root from '../layouts/Root.astro';
+import GradientLinkCard from '../components/GradientLinkCard.astro';
 ---
 
-<Root>
-  <Navbar />
-  <Home />
+<Root title="Home • officialdavidtaylor.com">
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-32 pt-[20%] pb-48">
+    <div class="flex flex-col items-start gap-6 font-serif">
+      <h1 class="pb-14 text-5xl md:text-center">
+        Welcome to my corner of the internet.
+      </h1>
+      <p class="text-2xl">
+        By trade, I build and maintain a small piece of the web. Like so many of
+        the sites we interact with on a regular basis, it’s a service dedicated
+        to commerce.
+      </p>
+      <p class="text-2xl">
+        This site is different. It’s the outgrowth of borrowed nostalgia, a
+        longing for a time I was too young to meaningfully remember: the <i
+          >old internet</i
+        >.
+      </p>
+      <p class="text-2xl">
+        A little weird, amorphous, personal. Borderline para-social.<br />It’s
+        good to see you at my stop on the information superhighway.
+      </p>
+    </div>
+    <div class="flex max-w-4xl flex-col justify-center gap-4 font-serif">
+      <h1 class="pb-14 text-5xl md:text-center">Might I interest you in...</h1>
+      <!-- "featured posts" -->
+      <GradientLinkCard
+        title="My record collection"
+        subtitle="Started in 2025 as a gift from my partner"
+        href="/my-record-collection"
+      />
+      <div
+        class="flex flex-col gap-3 rounded-lg bg-gradient-to-r from-neutral-100 to-neutral-50 p-6 text-center"
+      >
+        <p class="text-neutral-400">More posts are in the works...</p>
+      </div>
+    </div>
+    <h2 class="self-center font-serif text-2xl text-neutral-300">— fin —</h2>
+  </div>
 </Root>

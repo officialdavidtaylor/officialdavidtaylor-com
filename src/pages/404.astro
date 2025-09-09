@@ -1,23 +1,32 @@
 ---
-import Navbar from '../components/Navbar.astro';
+import LucideIcon from '../components/LucideIcon.astro';
 import Root from '../layouts/Root.astro';
+
+import { Circle } from 'lucide';
 ---
 
-<Root>
-  <Navbar />
-  <div class="flex flex-col gap-4 pb-4 pt-24">
+<Root title="lost & found">
+  <div class="flex flex-col items-center gap-4 pt-24 pb-4 font-serif">
     <div
-      class="rounded-lg bg-gradient-to-br from-[hsl(30,20%,97%)] to-[hsl(30,20%,94%)] px-4 py-16 lg:px-0"
+      class="shadow-solid max-w-2xl overflow-clip rounded-lg border-2 border-neutral-800 lg:px-0"
     >
-      <div class="mx-auto flex max-w-lg flex-col justify-center gap-4">
+      <div id="title-bar" class="flex h-8 items-center gap-1 bg-pink-300 p-2">
+        <LucideIcon icon={Circle} class:list={'size-5'} />
+        <LucideIcon icon={Circle} class:list={'size-5'} />
+        <LucideIcon icon={Circle} class:list={'size-5'} />
+      </div>
+      <div
+        class="flex w-full flex-col items-center gap-4 border-t-2 border-neutral-800 bg-neutral-100 p-4"
+      >
         <p class="font-mono text-6xl">404</p>
         <p>
-          Looks like that url doesn't exist. Let's head back to a defined route.
+          Looks like that url doesn't exist.<br />I hope you think long and hard
+          about how you got here.
         </p>
         <a
           href="/"
-          class="w-fit rounded-md bg-[hsl(130,43%,68%)] px-4 py-2 hover:bg-[hsl(130,43%,58%)]"
-          >Back to '/'</a
+          class="w-fit rounded-md border-2 border-black px-4 py-2 hover:bg-pink-300"
+          >Back to the Home page</a
         >
       </div>
     </div>

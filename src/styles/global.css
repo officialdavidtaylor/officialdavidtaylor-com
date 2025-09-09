@@ -1,0 +1,13 @@
+/* import fonts before anything else */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-serif: 'Lora', serif;
+  --font-sans: 'Fira Sans', sans-serif;
+  --font-mono: 'Fira Code', sans-serif;
+
+  /* variables */
+  --shadow-solid: 4px 4px black;
+}

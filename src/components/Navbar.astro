@@ -5,8 +5,8 @@ const route = new URL(currentRoute);
 const ConditionalAnchorTag = route.pathname !== '/' ? 'a' : 'p';
 ---
 
-<nav class="flex select-none py-4">
-  <ConditionalAnchorTag class="font-display" href="/">
-    <span class="text-[hsl(30,10%,75%)]">official</span>davidtaylor
+<nav class="flex justify-center pb-4 text-lg select-none md:py-4">
+  <ConditionalAnchorTag class="font-serif text-neutral-600" href="/">
+    <span class="text-neutral-300">official</span>davidtaylor
   </ConditionalAnchorTag>
 </nav>
