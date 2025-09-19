@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import Root from '../layouts/Root.astro';
+import Root from 'layouts/Root.astro';
 
 const records = await getCollection('records').then((records) =>
   // sort by artist name (omitting "The" prefix)
