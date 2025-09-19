@@ -1,0 +1,7 @@
+---
+title: 'Bloom'
+artist: 'Rüfüs Du Sol'
+giver: 'Mads & Thomas'
+cover: './assets/bloom.webp'
+dateReceived: 2025-09-18T19:00:00-08:00
+---
