@@ -2,9 +2,16 @@
   "name": "officialdavidtaylor-com",
   "type": "module",
   "version": "0.0.1",
+  "private": true,
   "packageManager": "yarn@4.5.0",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "astro dev --host",
+    "dev:cms": "yarn workspace strapi-cms dev",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
     "build": "astro build",
     "preview": "astro preview --host",
     "format": "prettier . --write",
