@@ -4,6 +4,8 @@ import { isWithinDays } from 'utils/isWithinDays';
 import Root from 'layouts/Root.astro';
 
 const records = await getCollection('strapiRecords');
+const strapiPublicUrl =
+  import.meta.env.STRAPI_PUBLIC_URL ?? import.meta.env.STRAPI_URL;
 ---
 
 <Root title="My Record Collection">
@@ -39,7 +41,7 @@ const records = await getCollection('strapiRecords');
               </p>
             )}
             <img
-              src={import.meta.env.STRAPI_URL + record.data.coverArt.url}
+              src={strapiPublicUrl + record.data.coverArt.url}
               alt=""
               role="presentation"
               class="max-w-20 rounded-sm shadow-sm"

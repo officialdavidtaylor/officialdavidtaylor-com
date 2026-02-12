@@ -19,3 +19,26 @@ It's a modern TS frontend web app stack:
 
 - **Astro** → using TypeScript
 - **tailwindcss** → because it just clicks in my brain somehow
+
+## Monorepo
+
+This repository now runs as a Yarn 4 workspace monorepo:
+
+- `officialdavidtaylor-com` (Astro web app, repo root)
+- `apps/strapi-cms` (Strapi CMS)
+
+## Local Development
+
+### Yarn
+
+Start the CMS:
+
+```bash
+yarn dev:cms
+```
+
+Start the web app:
+
+```bash
+yarn dev
+```
