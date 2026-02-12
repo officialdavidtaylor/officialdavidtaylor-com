@@ -2,11 +2,12 @@
   "name": "officialdavidtaylor-com",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "yarn@4.5.0",
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
     "preview": "astro preview --host",
-    "format": "npx prettier . --write",
+    "format": "prettier . --write",
     "astro": "astro"
   },
   "dependencies": {
