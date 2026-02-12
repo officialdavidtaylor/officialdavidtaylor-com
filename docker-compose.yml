@@ -53,6 +53,16 @@ services:
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '1337:1337'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null http://127.0.0.1:1337/_health || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
     volumes:
       - .:/workspace
       - workspace_node_modules:/workspace/node_modules
@@ -62,16 +72,17 @@ services:
   web:
     image: node:24.4-alpine
     working_dir: /workspace
-    command: sh -c "corepack enable && yarn dev --host 0.0.0.0 --port 4321"
+    command: sh -c "corepack enable && yarn astro dev --host 0.0.0.0 --port 4321"
     depends_on:
       deps:
         condition: service_completed_successfully
       cms:
-        condition: service_started
+        condition: service_healthy
     environment:
       STRAPI_URL: http://cms:1337
       STRAPI_PUBLIC_URL: http://localhost:1337
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-strapi_token}
+      STRAPI_FETCH_RETRIES: ${STRAPI_FETCH_RETRIES:-3}
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '4321:4321'
