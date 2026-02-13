@@ -42,3 +42,17 @@ Start the web app:
 ```bash
 yarn dev
 ```
+
+### Docker Compose
+
+Spin up the full local stack (web + cms + postgres):
+
+```bash
+yarn docker:up
+```
+
+Tear it down:
+
+```bash
+yarn docker:down
+```

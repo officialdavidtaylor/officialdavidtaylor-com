@@ -1,0 +1,88 @@
+services:
+  deps:
+    image: node:24.4-alpine
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn install"
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U strapi -d strapi']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  cms:
+    image: node:24.4-alpine
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn workspace strapi-cms develop"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+      DATABASE_SSL: 'false'
+      APP_KEYS: localAppKey1,localAppKey2
+      API_TOKEN_SALT: localApiTokenSalt
+      ADMIN_JWT_SECRET: localAdminJwtSecret
+      TRANSFER_TOKEN_SALT: localTransferTokenSalt
+      JWT_SECRET: localJwtSecret
+      ENCRYPTION_KEY: localEncryptionKey
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - '1337:1337'
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+  web:
+    image: node:24.4-alpine
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn dev --host 0.0.0.0 --port 4321"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      cms:
+        condition: service_started
+    environment:
+      STRAPI_URL: http://cms:1337
+      STRAPI_PUBLIC_URL: http://localhost:1337
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-strapi_token}
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - '4321:4321'
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+volumes:
+  postgres_data:
+  workspace_node_modules:
+  cms_node_modules:
+  yarn_cache:
