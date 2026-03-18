@@ -1,0 +1,12 @@
+# Dedicated tunnel host example config (single tunnel routing multiple services).
+# Copy to config.yml and replace placeholders.
+
+tunnel: <tunnel-id>
+credentials-file: /etc/cloudflared/credentials/<tunnel-id>.json
+
+ingress:
+  - hostname: cms.example.com
+    service: http://strapi.lan:1337
+  - hostname: media.example.com
+    service: http://minio.lan:9000
+  - service: http_status:404

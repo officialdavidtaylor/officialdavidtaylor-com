@@ -1,0 +1,13 @@
+services:
+  cloudflared:
+    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared:2026.2.1}
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    environment:
+      TUNNEL_METRICS: ${CLOUDFLARED_METRICS_BIND:-0.0.0.0:2000}
+    ports:
+      - "${CLOUDFLARED_METRICS_PORT:-2000}:2000" # Optional metrics endpoint on the LAN
+    volumes:
+      - ${CLOUDFLARED_CONFIG_PATH:-./config.yml}:/etc/cloudflared/config.yml:ro
+      - ${CLOUDFLARED_CREDENTIALS_PATH:-./credentials}:/etc/cloudflared/credentials:ro
