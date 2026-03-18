@@ -25,6 +25,30 @@ services:
       timeout: 5s
       retries: 12
 
+  minio:
+    image: minio/minio:RELEASE.2026-01-18T00-31-37Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        until mc alias set local http://minio:9000 minio minio12345; do sleep 2; done &&
+        mc mb --ignore-existing local/strapi-uploads &&
+        mc anonymous set public local/strapi-uploads
+
   cms:
     image: node:24.4-alpine
     working_dir: /workspace
@@ -34,9 +58,15 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     environment:
       HOST: 0.0.0.0
       PORT: 1337
+      PUBLIC_URL: http://localhost:1337
+      TRUST_PROXY: 'false'
+      CORS_ORIGIN: http://localhost:4321
+      CORS_CREDENTIALS: 'true'
       DATABASE_CLIENT: postgres
       DATABASE_HOST: db
       DATABASE_PORT: 5432
@@ -50,6 +80,14 @@ services:
       TRANSFER_TOKEN_SALT: localTransferTokenSalt
       JWT_SECRET: localJwtSecret
       ENCRYPTION_KEY: localEncryptionKey
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY_ID: minio
+      S3_SECRET_ACCESS_KEY: minio12345
+      S3_BUCKET: strapi-uploads
+      S3_REGION: us-east-1
+      S3_FORCE_PATH_STYLE: 'true'
+      S3_PUBLIC_URL: http://localhost:9000
+      S3_USE_SIGNED_URLS: 'false'
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '1337:1337'
@@ -83,6 +121,7 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:
   workspace_node_modules:
   cms_node_modules:
   yarn_cache:

@@ -27,6 +27,13 @@ This repository now runs as a Yarn 4 workspace monorepo:
 - `officialdavidtaylor-com` (Astro web app, repo root)
 - `apps/strapi-cms` (Strapi CMS)
 
+## Deployment Notes
+
+The Strapi CMS deployment plan (distributed devices, remote Postgres + MinIO, Cloudflare Tunnel layout, and production `.env` checklist) lives in:
+
+- `apps/strapi-cms/README.md`
+- `docker/mac-mini/README.md` for the single-host Mac Mini deployment path
+
 ## Local Development
 
 ### Yarn
@@ -45,7 +52,7 @@ yarn dev
 
 ### Docker Compose
 
-Spin up the full local stack (web + cms + postgres):
+Spin up the full local stack (web + cms + postgres + minio):
 
 ```bash
 yarn docker:up
