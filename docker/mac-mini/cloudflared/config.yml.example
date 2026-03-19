@@ -2,8 +2,12 @@ tunnel: <tunnel-id>
 credentials-file: /etc/cloudflared/credentials/<tunnel-id>.json
 
 ingress:
-  - hostname: cms.example.com
+  - hostname: officialdavidtaylor.com
+    service: http://web:80
+  - hostname: www.officialdavidtaylor.com
+    service: http://web:80
+  - hostname: cms.officialdavidtaylor.com
     service: http://strapi:1337
-  - hostname: media.example.com
+  - hostname: media.officialdavidtaylor.com
     service: http://minio:9000
   - service: http_status:404

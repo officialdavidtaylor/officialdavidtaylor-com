@@ -34,6 +34,18 @@ The Strapi CMS deployment plan (distributed devices, remote Postgres + MinIO, Cl
 - `apps/strapi-cms/README.md`
 - `docker/mac-mini/README.md` for the single-host Mac Mini deployment path
 
+## Release Workflow
+
+This repo now uses conventional commits plus semver-based Docker image tagging.
+
+- `yarn version:init` creates the initial `v<current-version>` tag the first time you enable releases in a repo with no existing release tags
+- `yarn version:check` shows the next recommended bump from commits since the last `v*` git tag
+- `yarn version:bump` applies that bump to the root and Strapi package versions
+- `yarn docker:build:release [all|strapi|web]` builds the selected images tagged as `<semver>` and `latest`
+- `yarn docker:push:release [all|strapi|web]` pushes both tags for the selected images
+
+Conventional commit enforcement is installed via Husky on `yarn install`.
+
 ## Local Development
 
 ### Yarn
