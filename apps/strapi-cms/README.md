@@ -42,6 +42,16 @@ If `Strapi`, `Postgres`, `MinIO`, and `cloudflared` will all run on the same Mac
 
 Use `docker compose`, not Docker Swarm, for this setup. On a single Mac Mini, Swarm adds orchestration overhead without adding meaningful resilience or scheduling value.
 
+The Mac Mini deployment is designed for registry mode: build and push `web` and `strapi` images elsewhere, then have the Mac Mini pull and run them.
+
+The Mac Mini stack can route:
+
+- `officialdavidtaylor.com` and `www.officialdavidtaylor.com` -> Astro web container
+- `cms.officialdavidtaylor.com` -> Strapi
+- `media.officialdavidtaylor.com` -> MinIO
+
+Because the Astro site is statically built, the published `web` image is a CMS-backed content snapshot. The Mac Mini deployment guide documents the registry-based publish, pull, and restart flow.
+
 ### Alternative: Distributed Devices
 
 ### Architecture
