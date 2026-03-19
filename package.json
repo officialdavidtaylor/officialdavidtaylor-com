@@ -1,20 +1,28 @@
 {
   "name": "officialdavidtaylor-com",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "packageManager": "yarn@4.5.0",
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
+    "postinstall": "husky",
+    "commitlint": "commitlint --config .commitlintrc.cjs",
     "dev": "astro dev --host",
     "dev:cms": "yarn workspace strapi-cms dev",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
+    "docker:build:release": "node scripts/docker-release.mjs build",
+    "docker:push:release": "node scripts/docker-release.mjs push",
     "build": "astro build",
     "preview": "astro preview --host",
     "format": "prettier . --write",
+    "version:check": "node scripts/version.mjs check",
+    "version:bump": "node scripts/version.mjs apply",
+    "version:init": "node scripts/version.mjs init",
+    "version:tag": "node scripts/version.mjs tag",
     "astro": "astro"
   },
   "dependencies": {
@@ -23,9 +31,12 @@
     "qs": "^6.14.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.13",
     "@types/qs": "^6.14.0",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.14",
