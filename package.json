@@ -2,15 +2,20 @@
   "name": "officialdavidtaylor-com",
   "type": "module",
   "version": "0.0.1",
+  "private": true,
+  "packageManager": "yarn@4.5.0",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
     "preview": "astro preview --host",
-    "format": "npx prettier . --write",
+    "format": "prettier . --write",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.13.7",
+    "astro": "^5.17.5",
     "lucide": "^0.469.0"
   },
   "devDependencies": {
