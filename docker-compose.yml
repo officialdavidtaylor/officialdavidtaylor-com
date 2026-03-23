@@ -1,0 +1,144 @@
+services:
+  deps:
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn install"
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U strapi -d strapi']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        until mc alias set local http://minio:9000 minio minio12345; do sleep 2; done &&
+        mc mb --ignore-existing local/strapi-uploads &&
+        mc anonymous set public local/strapi-uploads
+
+  cms:
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn workspace strapi-cms develop"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      PUBLIC_URL: http://localhost:1337
+      TRUST_PROXY: 'false'
+      CORS_ORIGIN: '["http://localhost:4321"]'
+      CORS_CREDENTIALS: 'true'
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+      DATABASE_SSL: 'false'
+      APP_KEYS: localAppKey1,localAppKey2
+      API_TOKEN_SALT: localApiTokenSalt
+      ADMIN_JWT_SECRET: localAdminJwtSecret
+      TRANSFER_TOKEN_SALT: localTransferTokenSalt
+      JWT_SECRET: localJwtSecret
+      ENCRYPTION_KEY: localEncryptionKey
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY_ID: minio
+      S3_SECRET_ACCESS_KEY: minio12345
+      S3_BUCKET: strapi-uploads
+      S3_REGION: us-east-1
+      S3_FORCE_PATH_STYLE: 'true'
+      S3_PUBLIC_URL: http://localhost:9000
+      S3_USE_SIGNED_URLS: 'false'
+      RECORDS_INVALIDATE_URL: http://web:4321/api/invalidate/records
+      RECORDS_INVALIDATE_SECRET: ${RECORDS_INVALIDATE_SECRET:-local-records-invalidate-secret}
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - '1337:1337'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:1337/_health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    command: sh -c "corepack enable && yarn astro dev --host 0.0.0.0 --port 4321"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      cms:
+        condition: service_healthy
+    environment:
+      STRAPI_URL: http://cms:1337
+      STRAPI_PUBLIC_URL: http://localhost:1337
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-strapi_token}
+      STRAPI_FETCH_RETRIES: ${STRAPI_FETCH_RETRIES:-3}
+      RECORDS_CACHE_TTL_SECONDS: ${RECORDS_CACHE_TTL_SECONDS:-3600}
+      RECORDS_INVALIDATE_SECRET: ${RECORDS_INVALIDATE_SECRET:-local-records-invalidate-secret}
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - '4321:4321'
+    volumes:
+      - .:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - cms_node_modules:/workspace/apps/strapi-cms/node_modules
+      - yarn_cache:/usr/local/share/.cache/yarn
+
+volumes:
+  postgres_data:
+  minio_data:
+  workspace_node_modules:
+  cms_node_modules:
+  yarn_cache:
