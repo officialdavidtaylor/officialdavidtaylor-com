@@ -11,17 +11,23 @@
     "dev": "astro dev --host",
     "dev:cms": "yarn workspace strapi-cms dev",
     "build": "astro build",
+    "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview --host",
     "format": "prettier . --write",
+    "records:import": "node scripts/import-records-to-strapi.mjs",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^9.5.0",
     "astro": "^5.17.5",
-    "lucide": "^0.469.0"
+    "gray-matter": "^4.0.3",
+    "lucide": "^0.469.0",
+    "qs": "^6.14.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.13",
+    "@types/qs": "^6.14.0",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.14",
