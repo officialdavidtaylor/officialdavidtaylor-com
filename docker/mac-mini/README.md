@@ -11,18 +11,13 @@ Files:
 - `cloudflared/config.yml.example`
 - `cloudflared/credentials/`
 
-Why Compose instead of Swarm:
-
-- this is a single-node deployment, so Swarm does not add useful scheduling or failover
-- Compose is simpler to operate, debug, back up, and restore on a personal host
-- `cloudflared`, Postgres, MinIO, and Strapi all fit cleanly into one stack without overlay networking or Swarm secrets
+This stack is designed to run with `docker compose` on the Mac Mini.
 
 Registry mode:
 
-- build and push `web` and `strapi` images from your development machine
+- let GitHub Actions build and push `web` and `strapi` images after release tags are created
 - pin immutable semver tags in `.env.mac-mini`
 - let the Mac Mini only `pull` and restart containers
-- release tooling supports targeted image builds: `yarn docker:build:release strapi` or `yarn docker:build:release web`
 
 Prerequisites:
 
@@ -44,17 +39,15 @@ Bootstrap flow
 
 This is the recommended first-time deployment order.
 
-### 1. Build and publish `strapi` from your development machine
+### 1. Prepare release automation
 
-From the repo root on your development machine:
+Merge the release-enabled branch into `main`, then let GitHub Actions:
 
-```bash
-docker login registry.emfsoft.com
-yarn docker:build:release strapi
-yarn docker:push:release strapi
-```
+- calculate the next semantic version from conventional commits
+- create the matching `v<semver>` git tag
+- build and push `strapi-cms` and `web` images for that tag
 
-This tags the `strapi` image as `<semver>` and `latest`, using the root `package.json` version as the source of truth.
+Wait for the release workflows to publish the first image tags before continuing.
 
 ### 2. Prepare the Mac Mini
 
@@ -70,7 +63,7 @@ cp cloudflared/config.yml.example cloudflared/config.yml
 
 Then:
 
-1. set `STRAPI_IMAGE` in `.env.mac-mini` to the tag you just pushed
+1. set `STRAPI_IMAGE` in `.env.mac-mini` to the published release tag
 2. fill in the Postgres, MinIO, and Strapi secret values
 3. place the named tunnel credentials JSON in `cloudflared/credentials/`
 
@@ -101,16 +94,9 @@ After Strapi is up on the Mac Mini:
 6. create a Strapi webhook that `POST`s to `http://web:4321/api/invalidate/records`
 7. include the header `x-records-invalidate-secret: <WEB_RECORDS_INVALIDATE_SECRET>`
 
-### 5. Build and publish `web` from your development machine
+### 5. Wait for the `web` image to be published
 
-From the repo root on your development machine:
-
-```bash
-yarn docker:build:release web
-yarn docker:push:release web
-```
-
-This tags the `web` image as `<semver>` and `latest`, using the same release version as `strapi`. Record data is fetched at runtime, not baked into the image.
+The release-image workflow publishes `web` for the same release tag as `strapi`. Record data is fetched at runtime, not baked into the image.
 
 ### 6. Start `web` on the Mac Mini
 
@@ -138,30 +124,26 @@ Operational notes:
 - `/my-record-collection` is server-rendered on demand and uses a process-local cache inside the `web` container
 - record updates should trigger the Strapi webhook so the `web` cache is cleared and rewarmed immediately
 
-Build and publish flow on your development machine:
+Release flow:
 
-1. If this repo has no release tags yet, seed the initial baseline once:
-   `yarn version:init`
-2. Check the next semver bump from conventional commits:
-   `yarn version:check`
-3. Apply the bump to `package.json` files:
-   `yarn version:bump`
-4. Build and push `strapi` first:
-   `yarn docker:build:release strapi && yarn docker:push:release strapi`
-5. Build and push `web`:
-   `yarn docker:build:release web && yarn docker:push:release web`
+1. merge conventional-commit PRs into `main`
+2. let the release-tag workflow create the next `v<semver>` tag
+3. let the release-images workflow build and push the matching `strapi-cms` and `web` images
+4. update image tags in `.env.mac-mini`
+5. pull and restart only the services whose image tags changed
 
 Update flow:
 
-1. On your development machine, use conventional commits so the next bump is derived from commit prefixes
-2. Run `yarn version:check`, then `yarn version:bump` when you are ready to cut a release
-3. Build and push the new semver-tagged images from your development machine
-4. On the Mac Mini, `git pull` if the deployment config changed
-5. Update image tags in `.env.mac-mini`
-6. Pull before restart: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini pull web strapi`
-7. Restart CMS only if its image changed: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d --no-deps strapi`
-8. Restart the main site only if its image changed: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d --no-deps web`
-9. If infrastructure config changed, run `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d` for the full stack
+1. Merge conventional-commit PRs into `main`
+2. Wait for GitHub Actions to publish the new semver-tagged images
+3. On the Mac Mini, `git pull` if the deployment config changed
+4. Update image tags in `.env.mac-mini`
+5. Pull before restart: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini pull web strapi`
+6. Restart CMS only if its image changed: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d --no-deps strapi`
+7. Restart the main site only if its image changed: `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d --no-deps web`
+8. If infrastructure config changed, run `docker compose -f docker-compose.production.yml --env-file .env.mac-mini up -d` for the full stack
+
+Local rehearsal for the release workflows now lives in the repo root docs. Use `act`, `actionlint`, and `yarn release:dry-run` before relying on the GitHub-hosted runs.
 
 This is the recommended minimal-downtime path for the Mac Mini setup. It does not provide true zero-downtime, but it keeps restarts scoped to the app containers while Postgres, MinIO, and `cloudflared` stay up.
 
