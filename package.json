@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "astro dev --host",
     "dev:cms": "yarn workspace strapi-cms dev",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
     "build": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview --host",

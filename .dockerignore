@@ -1,0 +1,9 @@
+.git
+.gitignore
+.vscode
+node_modules
+apps/strapi-cms/node_modules
+apps/strapi-cms/.cache
+apps/strapi-cms/build
+dist
+.DS_Store

@@ -1,0 +1,31 @@
+services:
+  strapi:
+    image: your-registry.example.com/officialdavidtaylor/strapi-cms:2026-02-23
+    container_name: strapi-cms
+    restart: unless-stopped
+    env_file:
+      - .env.strapi.production
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 1337
+    ports:
+      - "1337:1337" # LAN only; Cloudflare Tunnel should connect here
+    # Optional local volume if you write temp files, logs, or local uploads during migration.
+    # volumes:
+    #   - strapi-data:/srv/app/.tmp
+
+  # Optional: run the tunnel on the same device as Strapi for cms.example.com.
+  # Remove this service if you run a centralized tunnel host elsewhere.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.2.1
+    container_name: cloudflared-cms
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN_CMS}
+    depends_on:
+      - strapi
+
+# volumes:
+#   strapi-data:
