@@ -8,15 +8,21 @@
     "apps/*"
   ],
   "scripts": {
+    "postinstall": "husky",
+    "commitlint": "commitlint --config .commitlintrc.cjs",
     "dev": "astro dev --host",
     "dev:cms": "yarn workspace strapi-cms dev",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "build": "astro build",
+    "release:dry-run": "semantic-release --dry-run --no-ci",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview --host",
     "format": "prettier . --write",
     "records:import": "node scripts/import-records-to-strapi.mjs",
+    "workflow:lint": "actionlint",
+    "workflow:release-tag:local": "act push -W .github/workflows/release-tag.yml -e .github/events/main-push.json --secret-file .github/act-secrets.local",
+    "workflow:release-images:local": "act workflow_run -W .github/workflows/release-images.yml -e .github/events/release-tag-workflow-run.json --secret-file .github/act-secrets.local",
     "astro": "astro"
   },
   "dependencies": {
@@ -27,12 +33,19 @@
     "qs": "^6.14.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.13",
     "@types/qs": "^6.14.0",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.14",
+    "semantic-release": "^25.0.1",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.7.2"
   }
