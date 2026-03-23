@@ -1,23 +1,25 @@
 ---
-import { getCollection } from 'astro:content';
+export const prerender = false;
+
 import { isWithinDays } from 'utils/isWithinDays';
+import { getRecords } from 'lib/server/records';
 import Root from 'layouts/Root.astro';
 
-const records = await getCollection('records').then((records) =>
-  // sort by artist name (omitting "The" prefix)
-  records.sort((recordA, recordB) => {
-    let artistA = recordA.data.artist;
-    if (artistA.toLocaleLowerCase().startsWith('the ')) {
-      artistA = artistA.substring(4);
-    }
+type RecordsState = 'ready' | 'empty' | 'error';
 
-    let artistB = recordB.data.artist;
-    if (artistB.toLocaleLowerCase().startsWith('the ')) {
-      artistB = artistB.substring(4);
-    }
-    return artistA.localeCompare(artistB);
-  })
-);
+let records = [];
+let recordsState: RecordsState = 'ready';
+
+try {
+  records = await getRecords();
+
+  if (records.length === 0) {
+    recordsState = 'empty';
+  }
+} catch (error) {
+  recordsState = 'error';
+  console.error('Unable to load record collection', error);
+}
 ---
 
 <Root title="My Record Collection">
@@ -38,35 +40,45 @@ const records = await getCollection('records').then((records) =>
     class="-mx-4 mt-8 mb-4 flex max-w-4xl flex-col gap-2 bg-neutral-100 p-2 py-3 font-sans sm:mx-auto sm:gap-2 sm:rounded-xl sm:p-2"
   >
     {
-      records.map((record) => {
-        const isNewAddition = isWithinDays(record.data.dateReceived, 14);
-        return (
-          <div
-            class={[
-              'relative flex items-center gap-4 rounded-lg border-2 p-2 select-none',
-              isNewAddition ? 'border-neutral-400' : 'border-transparent',
-            ].join(' ')}
-          >
-            {isNewAddition && (
-              <p class="absolute -top-2 right-0 left-0 mx-auto h-min w-32 bg-neutral-100 p-1 text-center leading-2 text-neutral-600">
-                recent addition!
-              </p>
-            )}
-            <img
-              src={record.data.cover.src}
-              alt=""
-              role="presentation"
-              class="max-w-20 rounded-sm shadow-sm"
-            />
-            <div class="h-full">
-              <p class="text-2xl leading-6">{record.data.title}</p>
-              <p class="font-serif text-lg text-neutral-400">
-                {record.data.artist}
-              </p>
+      (recordsState === 'error' || recordsState === 'empty') && (
+        <div class="p-6 text-center text-xl text-neutral-600">
+          <p>The collection is taking a little nap right now.</p>
+          <br />
+          <p>Please check back in a bit.</p>
+        </div>
+      )
+    }
+    {
+      recordsState === 'ready' &&
+        records.map((record) => {
+          const isNewAddition = isWithinDays(record.receivedOn, 14);
+          return (
+            <div
+              class={[
+                'relative flex items-center gap-4 rounded-lg border-2 p-2 select-none',
+                isNewAddition ? 'border-neutral-400' : 'border-transparent',
+              ].join(' ')}
+            >
+              {isNewAddition && (
+                <p class="absolute -top-2 right-0 left-0 mx-auto h-min w-32 bg-neutral-100 p-1 text-center leading-2 text-neutral-600">
+                  recent addition!
+                </p>
+              )}
+              <img
+                src={record.coverUrl}
+                alt=""
+                role="presentation"
+                class="max-w-20 rounded-sm shadow-sm"
+              />
+              <div class="h-full">
+                <p class="text-2xl leading-6">{record.title}</p>
+                <p class="font-serif text-lg text-neutral-400">
+                  {record.artistName}
+                </p>
+              </div>
             </div>
-          </div>
-        );
-      })
+          );
+        })
     }
   </div>
 </Root>

@@ -1,5 +1,4 @@
 import { defineCollection, z } from 'astro:content';
-
 import { glob } from 'astro/loaders';
 
 const recipes = defineCollection({
@@ -16,17 +15,6 @@ const recipes = defineCollection({
     }),
 });
 
-const records = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/records' }),
-  schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      artist: z.string(),
-      giver: z.string().optional(),
-      cover: image(),
-      dateReceived: z.coerce.date(),
-      dateCreated: z.coerce.date().optional(),
-    }),
-});
-
-export const collections = { recipes, records };
+export const collections = {
+  recipes,
+};
