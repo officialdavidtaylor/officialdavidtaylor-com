@@ -2,7 +2,7 @@
 
 This deployment bundle is the recommended production path when all CMS services run on a single Mac Mini.
 
-This is a registry-mode deployment. The Mac Mini does not build the `web` or `strapi` images locally; it pulls prebuilt images from your personal registry.
+This is a registry-mode deployment. The Mac Mini does not build the `web` or `strapi` images locally; it pulls prebuilt images from GitHub Container Registry (`ghcr.io`).
 
 Files:
 
@@ -22,7 +22,8 @@ Registry mode:
 Prerequisites:
 
 - Docker Desktop or Docker Engine running on the Mac Mini
-- access to `registry.emfsoft.com` from both your development machine and the Mac Mini
+- access to `ghcr.io` from both your development machine and the Mac Mini
+- a GitHub username plus a token that can pull GHCR images (for example, a PAT with `read:packages`) if the packages remain private
 - a Cloudflare named tunnel with credentials JSON available for the Mac Mini
 - a valid Strapi read-only API token for the `web` runtime
 
@@ -56,7 +57,7 @@ On the Mac Mini:
 ```bash
 git clone <repo-url>
 cd officialdavidtaylor-com/docker/mac-mini
-docker login registry.emfsoft.com
+echo "$GHCR_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
 cp .env.mac-mini.example .env.mac-mini
 cp cloudflared/config.yml.example cloudflared/config.yml
 ```
@@ -128,7 +129,7 @@ Release flow:
 
 1. merge conventional-commit PRs into `main`
 2. let the release-tag workflow create the next `v<semver>` tag
-3. let the release-images workflow run after the successful release-tag workflow and push the matching `strapi-cms` and `web` images
+3. let the release-images workflow run after the successful release-tag workflow and push the matching `strapi-cms` and `web` images to GHCR
 4. update image tags in `.env.mac-mini`
 5. pull and restart only the services whose image tags changed
 
