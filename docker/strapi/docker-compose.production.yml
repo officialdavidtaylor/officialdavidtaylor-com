@@ -1,6 +1,6 @@
 services:
   strapi:
-    image: your-registry.example.com/officialdavidtaylor/strapi-cms:2026-02-23
+    image: ghcr.io/officialdavidtaylor/officialdavidtaylor-com-strapi-cms:2026-02-23
     container_name: strapi-cms
     restart: unless-stopped
     env_file:

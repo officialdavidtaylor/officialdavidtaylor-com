@@ -40,7 +40,7 @@ If `Strapi`, `Postgres`, `MinIO`, and `cloudflared` will all run on the same Mac
 - `docker/mac-mini/.env.mac-mini.example`
 - `docker/mac-mini/cloudflared/config.yml.example`
 
-The Mac Mini deployment is designed for registry mode: build and push `web` and `strapi` images elsewhere, then have the Mac Mini pull and run them.
+The Mac Mini deployment is designed for registry mode: build and push `web` and `strapi` images to GHCR elsewhere, then have the Mac Mini pull and run them.
 
 The Mac Mini stack can route:
 
@@ -54,7 +54,7 @@ The `web` service is an Astro Node server. Most pages are static, but `/my-recor
 
 ### Architecture
 
-- `Strapi` should be deployed as a custom image (your app code + content types + plugins + config), ideally pushed to your personal Docker registry.
+- `Strapi` should be deployed as a custom image (your app code + content types + plugins + config), ideally pushed to GitHub Container Registry (`ghcr.io`).
 - `Postgres` is an external dependency from the Strapi host's perspective.
 - `MinIO` is an external dependency from the Strapi host's perspective.
 - `Cloudflare Tunnel` should expose only HTTP(S) services. Do not expose Postgres publicly.
