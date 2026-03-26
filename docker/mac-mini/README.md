@@ -8,8 +8,6 @@ Files:
 
 - `docker-compose.production.yml`
 - `.env.mac-mini.example`
-- `cloudflared/config.yml.example`
-- `cloudflared/credentials/`
 
 This stack is designed to run with `docker compose` on the Mac Mini.
 
@@ -24,7 +22,7 @@ Prerequisites:
 - Docker Desktop or Docker Engine running on the Mac Mini
 - access to `ghcr.io` from both your development machine and the Mac Mini
 - a GitHub username plus a token that can pull GHCR images (for example, a PAT with `read:packages`) if the packages remain private
-- a Cloudflare named tunnel with credentials JSON available for the Mac Mini
+- a remote-managed Cloudflare Tunnel token for the Mac Mini tunnel
 - a valid Strapi read-only API token for the `web` runtime
 
 Recommended stack on the Mac Mini:
@@ -59,14 +57,13 @@ git clone <repo-url>
 cd officialdavidtaylor-com/docker/mac-mini
 echo "$GHCR_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
 cp .env.mac-mini.example .env.mac-mini
-cp cloudflared/config.yml.example cloudflared/config.yml
 ```
 
 Then:
 
 1. set `STRAPI_IMAGE` in `.env.mac-mini` to the published release tag
 2. fill in the Postgres, MinIO, and Strapi secret values
-3. place the named tunnel credentials JSON in `cloudflared/credentials/`
+3. paste the remote-managed tunnel token into `CLOUDFLARED_TUNNEL_TOKEN`
 
 ### 3. Start the CMS-side services on the Mac Mini
 
@@ -117,9 +114,11 @@ Final checks:
 
 Operational notes:
 
-- `cloudflared/config.yml` expects a named tunnel credentials JSON under `cloudflared/credentials/`
-- the tunnel config routes `officialdavidtaylor.com` and `www.officialdavidtaylor.com` to the internal `web` service
-- the tunnel config routes `cms.officialdavidtaylor.com` to the internal `strapi` service and `media.officialdavidtaylor.com` to the internal `minio` service
+- configure the remote-managed tunnel's public hostnames in Cloudflare:
+- `officialdavidtaylor.com` and `www.officialdavidtaylor.com` -> `http://web:4321`
+- `cms.officialdavidtaylor.com` -> `http://strapi:1337`
+- `media.officialdavidtaylor.com` -> `http://minio:9000`
+- the container only needs `CLOUDFLARED_TUNNEL_TOKEN`; it does not mount a local config or tunnel credentials JSON
 - Postgres stays private inside the Compose network
 - the `web`, `strapi`, and MinIO console ports are bound to `127.0.0.1` on the host for local troubleshooting without exposing them on the LAN
 - `/my-record-collection` is server-rendered on demand and uses a process-local cache inside the `web` container
