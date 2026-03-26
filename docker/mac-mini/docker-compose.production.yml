@@ -97,8 +97,9 @@ services:
     image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared:2026.2.1}
     container_name: portfolio-cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    command: tunnel --no-autoupdate run
     environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}
       TUNNEL_METRICS: ${CLOUDFLARED_METRICS_BIND:-0.0.0.0:2000}
     depends_on:
       - minio
@@ -106,9 +107,6 @@ services:
       - web
     ports:
       - "127.0.0.1:${CLOUDFLARED_METRICS_PORT:-2000}:2000"
-    volumes:
-      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
-      - ./cloudflared/credentials:/etc/cloudflared/credentials:ro
 
 volumes:
   postgres_data:

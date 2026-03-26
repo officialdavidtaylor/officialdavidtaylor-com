@@ -38,7 +38,6 @@ If `Strapi`, `Postgres`, `MinIO`, and `cloudflared` will all run on the same Mac
 - `docker/mac-mini/README.md`
 - `docker/mac-mini/docker-compose.production.yml`
 - `docker/mac-mini/.env.mac-mini.example`
-- `docker/mac-mini/cloudflared/config.yml.example`
 
 The Mac Mini deployment is designed for registry mode: build and push `web` and `strapi` images to GHCR elsewhere, then have the Mac Mini pull and run them.
 
@@ -139,7 +138,6 @@ Templates:
 
 - compose: `docker/cloudflared/docker-compose.production.yml`
 - env: `docker/cloudflared/.env.cloudflared.production.example`
-- tunnel config: `docker/cloudflared/config.yml.example`
 
 Example usage on the tunnel host:
 
@@ -340,33 +338,18 @@ Keep public API routes accessible as needed:
 - If `media.example.com` serves immutable assets, caching is appropriate there.
 - Consider a reverse proxy in front of MinIO for cleaner cache-control headers and URL normalization.
 
-### Example Tunnel Ingress (Single Tunnel Host Pattern)
+### Remote-Managed Tunnel Hostnames
 
-Reference template: `docker/cloudflared/config.yml.example`
+For the deployment templates in this repo, `cloudflared` runs as a remote-managed tunnel authenticated with a tunnel token. Configure public hostnames in the Cloudflare dashboard, API, or Terraform instead of mounting a local `config.yml`.
 
-```yaml
-tunnel: <tunnel-id>
-credentials-file: /etc/cloudflared/<tunnel-id>.json
+Typical mappings:
 
-ingress:
-  - hostname: cms.example.com
-    service: http://strapi.lan:1337
-  - hostname: media.example.com
-    service: http://minio.lan:9000
-  - service: http_status:404
-```
+- `cms.example.com` -> `http://strapi.lan:1337`
+- `media.example.com` -> `http://minio.lan:9000`
 
-### Example Tunnel Ingress (Strapi Host Only)
+If `cloudflared` runs alongside Strapi on the same host, the Strapi mapping can instead target:
 
-```yaml
-tunnel: <tunnel-id>
-credentials-file: /etc/cloudflared/<tunnel-id>.json
-
-ingress:
-  - hostname: cms.example.com
-    service: http://localhost:1337
-  - service: http_status:404
-```
+- `cms.example.com` -> `http://localhost:1337`
 
 ## Production Checklist (Do Not Skip)
 
