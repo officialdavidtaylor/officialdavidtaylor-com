@@ -25,6 +25,14 @@ const getOptionalEnv = (name: string) => {
   return value ? value : undefined;
 };
 
+const getRequestOrigin = (url: string) => {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return undefined;
+  }
+};
+
 const toErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -54,6 +62,9 @@ export const createRecordsCacheInvalidator = ({
   }
 
   let inflight: Promise<void> | null = null;
+  const invalidateOrigin = invalidateUrl
+    ? getRequestOrigin(invalidateUrl)
+    : undefined;
 
   return async (reason: string) => {
     if (inflight) {
@@ -64,9 +75,12 @@ export const createRecordsCacheInvalidator = ({
     const timeout = setTimeout(() => controller.abort(), INVALIDATE_TIMEOUT_MS);
 
     inflight = fetchImpl(invalidateUrl, {
+      body: '{}',
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         [INVALIDATE_SECRET_HEADER]: invalidateSecret,
+        ...(invalidateOrigin ? { Origin: invalidateOrigin } : {}),
       },
       signal: controller.signal,
     })
