@@ -1,17 +1,37 @@
 ---
 export const prerender = false;
 
+import type { LiveDataEntry } from 'astro';
+import { getLiveCollection } from 'astro:content';
+
+import type { RecordData } from 'lib/server/records';
 import { isWithinDays } from 'utils/isWithinDays';
-import { getRecords } from 'lib/server/records';
 import Root from 'layouts/Root.astro';
 
 type RecordsState = 'ready' | 'empty' | 'error';
 
-let records = [];
+let records: Array<LiveDataEntry<RecordData>> = [];
 let recordsState: RecordsState = 'ready';
 
 try {
-  records = await getRecords();
+  const recordArray = await getLiveCollection('records');
+
+  if (recordArray.error || !recordArray.entries) {
+    throw (
+      recordArray.error ?? new Error('Record collection returned no entries')
+    );
+  }
+
+  if (recordArray.cacheHint) {
+    Astro.cache.set(recordArray.cacheHint);
+  }
+
+  recordArray.entries.forEach((record) => {
+    Astro.cache.set(record);
+  });
+  Astro.cache.set({ maxAge: 60 * 5, swr: 60 });
+
+  records = recordArray.entries;
 
   if (records.length === 0) {
     recordsState = 'empty';
@@ -51,7 +71,7 @@ try {
     {
       recordsState === 'ready' &&
         records.map((record) => {
-          const isNewAddition = isWithinDays(record.receivedOn, 14);
+          const isNewAddition = isWithinDays(record.data.receivedOn, 14);
           return (
             <div
               class={[
@@ -65,15 +85,15 @@ try {
                 </p>
               )}
               <img
-                src={record.coverUrl}
+                src={record.data.coverUrl}
                 alt=""
                 role="presentation"
                 class="max-w-20 rounded-sm shadow-sm"
               />
               <div class="h-full">
-                <p class="text-2xl leading-6">{record.title}</p>
+                <p class="text-2xl leading-6">{record.data.title}</p>
                 <p class="font-serif text-lg text-neutral-400">
-                  {record.artistName}
+                  {record.data.artistName}
                 </p>
               </div>
             </div>

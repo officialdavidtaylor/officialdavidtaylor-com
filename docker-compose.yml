@@ -88,8 +88,6 @@ services:
       S3_FORCE_PATH_STYLE: 'true'
       S3_PUBLIC_URL: http://localhost:9000
       S3_USE_SIGNED_URLS: 'false'
-      RECORDS_INVALIDATE_URL: http://web:4321/api/invalidate/records
-      RECORDS_INVALIDATE_SECRET: ${RECORDS_INVALIDATE_SECRET:-local-records-invalidate-secret}
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '1337:1337'
@@ -125,8 +123,6 @@ services:
       STRAPI_PUBLIC_URL: http://localhost:1337
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-strapi_token}
       STRAPI_FETCH_RETRIES: ${STRAPI_FETCH_RETRIES:-3}
-      RECORDS_CACHE_TTL_SECONDS: ${RECORDS_CACHE_TTL_SECONDS:-3600}
-      RECORDS_INVALIDATE_SECRET: ${RECORDS_INVALIDATE_SECRET:-local-records-invalidate-secret}
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '4321:4321'
