@@ -25,10 +25,6 @@ try {
   if (recordArray.cacheHint) {
     Astro.cache.set(recordArray.cacheHint);
   }
-
-  recordArray.entries.forEach((record) => {
-    Astro.cache.set(record);
-  });
   Astro.cache.set({ maxAge: 60 * 5, swr: 60 });
 
   records = recordArray.entries;
