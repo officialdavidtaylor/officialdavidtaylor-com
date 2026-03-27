@@ -52,7 +52,7 @@ The Mac Mini stack can route:
 - `cms.officialdavidtaylor.com` -> Strapi
 - `media.officialdavidtaylor.com` -> MinIO
 
-The `web` service is an Astro Node server. Most pages are static, but `/my-record-collection` is rendered on demand from Strapi and backed by an in-memory cache that can be explicitly rewarmed by Strapi itself after content changes.
+The `web` service is an Astro Node server. Most pages are static, but `/my-record-collection` is rendered on demand from Strapi through Astro live content collections and cached with Astro route caching.
 
 ### Alternative: Distributed Devices
 
@@ -270,34 +270,15 @@ What is already handled:
 - env-driven CORS origin allowlist in `config/middlewares.ts` via `CORS_ORIGIN` / `CORS_CREDENTIALS`
 - media-domain CSP allowlisting in `config/middlewares.ts` (derived from `S3_PUBLIC_URL` or `S3_ENDPOINT`)
 
-## Built-In Cache Rewarm
+## Record Collection Caching
 
-The `web` container exposes a cache rewarm endpoint for the record collection page:
-
-- method: `POST`
-- path: `/api/invalidate/records`
-- auth header: `x-records-invalidate-secret`
-
-This repo now wires Strapi to call that endpoint automatically after `record` and `artist` create/update/delete events.
-
-Recommended destination when `web` and `strapi` run in the same Compose network:
-
-```text
-http://web:4321/api/invalidate/records
-```
-
-Required Strapi environment variables:
-
-```text
-RECORDS_INVALIDATE_URL=http://web:4321/api/invalidate/records
-RECORDS_INVALIDATE_SECRET=<same value as WEB_RECORDS_INVALIDATE_SECRET>
-```
+`/my-record-collection` now uses Astro Experimental Route Caching instead of a custom cache-rewarm endpoint.
 
 Behavior:
 
-- the endpoint clears the process-local records cache
-- it immediately refetches records from Strapi
-- success means the cache is warm again before the response is returned
+- record data is fetched live from Strapi through an Astro live content collection
+- the route cache keeps the page fresh for 5 minutes
+- stale responses can be served for up to 1 minute while Astro revalidates in the background
 
 ## Cloudflare Subdomain + Tunnel Plan
 

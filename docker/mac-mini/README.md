@@ -88,9 +88,6 @@ After Strapi is up on the Mac Mini:
 2. create the first administrator account
 3. create a read-only API token for the `web` runtime
 4. put that token into `WEB_STRAPI_API_TOKEN` in `.env.mac-mini`
-5. set `WEB_RECORDS_INVALIDATE_SECRET` in `.env.mac-mini`
-
-The Compose stack now passes that secret into both containers and configures Strapi to `POST` to `http://web:4321/api/invalidate/records` automatically after record and artist changes.
 
 ### 5. Wait for the `web` image to be published
 
@@ -121,8 +118,8 @@ Operational notes:
 - the container only needs `CLOUDFLARED_TUNNEL_TOKEN`; it does not mount a local config or tunnel credentials JSON
 - Postgres stays private inside the Compose network
 - the `web`, `strapi`, and MinIO console ports are bound to `127.0.0.1` on the host for local troubleshooting without exposing them on the LAN
-- `/my-record-collection` is server-rendered on demand and uses a process-local cache inside the `web` container
-- record and artist updates now trigger the built-in Strapi cache rewarm so the `web` cache is cleared and rewarmed immediately
+- `/my-record-collection` is server-rendered on demand from Strapi through Astro live content collections
+- Astro route caching keeps `/my-record-collection` fresh for 5 minutes and serves stale content for up to 1 minute while revalidating
 
 Release flow:
 
@@ -150,5 +147,5 @@ This is the recommended minimal-downtime path for the Mac Mini setup. It does no
 One important operational consequence:
 
 - changes in Strapi record content should appear without rebuilding `web`
-- the supported fast path is: Strapi lifecycle hook -> `/api/invalidate/records` -> cache clear + synchronous rewarm
-- if the rewarm endpoint is unavailable, the records cache will eventually refresh when its TTL expires
+- the record collection page is cached in the Astro runtime instead of through a custom rewarm endpoint
+- expect updates to appear within the 5 minute freshness window, with up to 1 minute of stale-while-revalidate during refresh

@@ -32,7 +32,7 @@ The containerized deployment plan lives in:
 - `apps/strapi-cms/README.md`
 - `docker/mac-mini/README.md` for the single-host Mac Mini deployment path
 
-The `web` service now runs Astro in Node standalone mode. Most pages remain statically prerendered, while `/my-record-collection` is server-rendered on demand from Strapi with an in-memory TTL cache plus a Strapi-triggered rewarm route.
+The `web` service now runs Astro in Node standalone mode. Most pages remain statically prerendered, while `/my-record-collection` is server-rendered on demand from Strapi through Astro 6 live content collections and route caching.
 
 The repo now keeps separate Dockerfiles for the `web` image:
 
@@ -46,7 +46,7 @@ This repo now uses conventional commits plus GitHub Actions-driven releases.
 - pushes to `main` run `semantic-release`, which calculates the next semver tag from conventional commits and creates the matching GitHub release
 - successful release-tag runs fan into the image workflow, which builds and pushes both the `web` and `strapi-cms` images to GitHub Container Registry (`ghcr.io`) for the newly created semver tag when one exists
 - the production `web` image is built from the root `Dockerfile`, which now only contains the focused production build path so CI does not build the dev variant
-- the `web` image no longer bakes record data in at build time; runtime Strapi access and cache invalidation are configured through environment variables on the deployed container
+- the `web` image no longer bakes record data in at build time; runtime Strapi access is configured through environment variables on the deployed container while Astro handles route caching in-process
 
 Conventional commit enforcement is installed via Husky on `yarn install`.
 
@@ -99,7 +99,7 @@ For the image workflow, use the same `--secret-file` and swap in `.github/events
 
 ### Yarn
 
-Create a root `.env` from `.env.example` and set a valid Strapi API token plus a cache invalidation secret before starting the web app.
+Create a root `.env` from `.env.example` and set a valid Strapi API token before starting the web app.
 
 Start the CMS:
 
@@ -130,17 +130,8 @@ yarn docker:down
 The local `web` container expects:
 
 - `STRAPI_API_TOKEN`
-- `RECORDS_INVALIDATE_SECRET`
 
-The records cache can be refreshed manually with:
-
-```bash
-curl -X POST \
-  -H "x-records-invalidate-secret: <your-secret>" \
-  http://127.0.0.1:4321/api/invalidate/records
-```
-
-When Strapi runs through the provided Docker Compose stacks, it now calls that endpoint automatically after `record` and `artist` changes.
+Record data is loaded live from Strapi, and `/my-record-collection` is cached with Astro route caching for 5 minutes plus 1 minute of stale-while-revalidate.
 
 ## Records Cutover
 

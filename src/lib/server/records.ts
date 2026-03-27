@@ -1,14 +1,17 @@
+import type { LiveDataCollection, LiveDataEntry } from 'astro';
+import type { LiveLoader } from 'astro/loaders';
+
 import qs from 'qs';
 import { z } from 'astro/zod';
 
 const DEFAULT_RETRY_ATTEMPTS = 3;
-const DEFAULT_CACHE_TTL_SECONDS = 60 * 60;
 const PAGE_SIZE = 100;
-const INVALIDATE_SECRET_HEADER = 'x-records-invalidate-secret';
+const RECORDS_COLLECTION_TAG = 'records';
 
 const strapiRecordSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
+  updatedAt: z.coerce.date(),
   artist: z.object({
     name: z.string().min(1),
   }),
@@ -29,7 +32,7 @@ const strapiRecordsPageSchema = z.object({
   }),
 });
 
-export type RecordEntry = {
+export type RecordData = {
   artistName: string;
   coverUrl: string;
   giver: string | null;
@@ -39,21 +42,13 @@ export type RecordEntry = {
 };
 
 type RuntimeConfig = {
-  cacheTtlMs: number;
-  invalidateSecret: string | undefined;
   retryAttempts: number;
   strapiApiToken: string;
   strapiPublicUrl: string;
   strapiUrl: string;
 };
 
-type CacheEntry = {
-  expiresAt: number;
-  value: RecordEntry[];
-};
-
-let cache: CacheEntry | null = null;
-let inflight: Promise<RecordEntry[]> | null = null;
+type StrapiRecord = z.infer<typeof strapiRecordSchema>;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -90,13 +85,6 @@ function getRuntimeConfig(): RuntimeConfig {
   const strapiPublicUrl = process.env.STRAPI_PUBLIC_URL?.trim() || strapiUrl;
 
   return {
-    cacheTtlMs:
-      parsePositiveInt(
-        process.env.RECORDS_CACHE_TTL_SECONDS,
-        DEFAULT_CACHE_TTL_SECONDS,
-        'RECORDS_CACHE_TTL_SECONDS'
-      ) * 1000,
-    invalidateSecret: process.env.RECORDS_INVALIDATE_SECRET?.trim(),
     retryAttempts: parsePositiveInt(
       process.env.STRAPI_FETCH_RETRIES,
       DEFAULT_RETRY_ATTEMPTS,
@@ -108,13 +96,16 @@ function getRuntimeConfig(): RuntimeConfig {
   };
 }
 
-function sortRecords(recordA: RecordEntry, recordB: RecordEntry): number {
-  let artistA = recordA.artistName;
+function sortRecords(
+  recordA: LiveDataEntry<RecordData>,
+  recordB: LiveDataEntry<RecordData>
+): number {
+  let artistA = recordA.data.artistName;
   if (artistA.toLocaleLowerCase().startsWith('the ')) {
     artistA = artistA.substring(4);
   }
 
-  let artistB = recordB.artistName;
+  let artistB = recordB.data.artistName;
   if (artistB.toLocaleLowerCase().startsWith('the ')) {
     artistB = artistB.substring(4);
   }
@@ -128,6 +119,52 @@ function toPublicAssetUrl(assetUrl: string, publicBaseUrl: string): string {
   }
 
   return new URL(assetUrl, publicBaseUrl).toString();
+}
+
+function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function toLiveRecordEntry(
+  record: StrapiRecord,
+  config: RuntimeConfig
+): LiveDataEntry<RecordData> {
+  return {
+    id: record.slug,
+    data: {
+      artistName: record.artist.name,
+      coverUrl: toPublicAssetUrl(record.coverArt.url, config.strapiPublicUrl),
+      giver: record.giver,
+      receivedOn: record.receivedOn,
+      slug: record.slug,
+      title: record.title,
+    },
+    cacheHint: {
+      lastModified: record.updatedAt,
+      tags: [
+        RECORDS_COLLECTION_TAG,
+        `${RECORDS_COLLECTION_TAG}:${record.slug}`,
+      ],
+    },
+  };
+}
+
+function toCollectionCacheHint(
+  entries: Array<LiveDataEntry<RecordData>>
+): LiveDataCollection<RecordData>['cacheHint'] {
+  const lastModified = entries.reduce<Date | undefined>((latest, entry) => {
+    const candidate = entry.cacheHint?.lastModified;
+    if (!candidate) {
+      return latest;
+    }
+
+    return !latest || candidate > latest ? candidate : latest;
+  }, undefined);
+
+  return {
+    ...(lastModified ? { lastModified } : {}),
+    tags: [RECORDS_COLLECTION_TAG],
+  };
 }
 
 async function fetchJsonWithRetries(
@@ -173,10 +210,18 @@ async function fetchJsonWithRetries(
 
 async function fetchRecordsPage(
   page: number,
-  config: RuntimeConfig
+  config: RuntimeConfig,
+  slug?: string
 ): Promise<z.infer<typeof strapiRecordsPageSchema>> {
   const query = qs.stringify(
     {
+      filters: slug
+        ? {
+            slug: {
+              $eq: slug,
+            },
+          }
+        : undefined,
       pagination: {
         page,
         pageSize: PAGE_SIZE,
@@ -198,8 +243,10 @@ async function fetchRecordsPage(
   return strapiRecordsPageSchema.parse(json);
 }
 
-async function fetchAllRecords(config: RuntimeConfig): Promise<RecordEntry[]> {
-  const records: RecordEntry[] = [];
+async function fetchAllRecords(
+  config: RuntimeConfig
+): Promise<Array<LiveDataEntry<RecordData>>> {
+  const records: Array<LiveDataEntry<RecordData>> = [];
   let page = 1;
   let pageCount = 1;
 
@@ -208,14 +255,7 @@ async function fetchAllRecords(config: RuntimeConfig): Promise<RecordEntry[]> {
     pageCount = response.meta.pagination.pageCount;
 
     records.push(
-      ...response.data.map((record) => ({
-        artistName: record.artist.name,
-        coverUrl: toPublicAssetUrl(record.coverArt.url, config.strapiPublicUrl),
-        giver: record.giver,
-        receivedOn: record.receivedOn,
-        slug: record.slug,
-        title: record.title,
-      }))
+      ...response.data.map((record) => toLiveRecordEntry(record, config))
     );
 
     page += 1;
@@ -224,51 +264,45 @@ async function fetchAllRecords(config: RuntimeConfig): Promise<RecordEntry[]> {
   return records.sort(sortRecords);
 }
 
-async function populateCache(): Promise<RecordEntry[]> {
-  if (inflight) {
-    return inflight;
-  }
+async function fetchRecordBySlug(
+  slug: string,
+  config: RuntimeConfig
+): Promise<LiveDataEntry<RecordData> | undefined> {
+  const response = await fetchRecordsPage(1, config, slug);
+  const record = response.data[0];
 
-  inflight = (async () => {
-    const config = getRuntimeConfig();
-    const records = await fetchAllRecords(config);
-    cache = {
-      expiresAt: Date.now() + config.cacheTtlMs,
-      value: records,
-    };
-
-    return records;
-  })().finally(() => {
-    inflight = null;
-  });
-
-  return inflight;
+  return record ? toLiveRecordEntry(record, config) : undefined;
 }
 
-export async function getRecords(): Promise<RecordEntry[]> {
-  if (cache && cache.expiresAt > Date.now()) {
-    return cache.value;
-  }
+export function recordsLoader(): LiveLoader<RecordData> {
+  return {
+    name: 'strapi-records-loader',
+    loadCollection: async () => {
+      try {
+        const config = getRuntimeConfig();
+        const entries = await fetchAllRecords(config);
 
-  return populateCache();
-}
-
-export async function refreshRecordsCache(): Promise<RecordEntry[]> {
-  cache = null;
-  inflight = null;
-
-  return populateCache();
-}
-
-export function getInvalidateSecretHeader(): string {
-  return INVALIDATE_SECRET_HEADER;
-}
-
-export function isInvalidateSecretValid(secret: string | null): boolean {
-  const configuredSecret = getRuntimeConfig().invalidateSecret;
-  if (!configuredSecret) {
-    throw new Error('RECORDS_INVALIDATE_SECRET environment variable is not set');
-  }
-
-  return secret === configuredSecret;
+        return {
+          cacheHint: toCollectionCacheHint(entries),
+          entries,
+        };
+      } catch (error) {
+        return {
+          error: new Error(
+            `Unable to load records collection: ${toErrorMessage(error)}`
+          ),
+        };
+      }
+    },
+    loadEntry: async ({ filter }) => {
+      try {
+        const config = getRuntimeConfig();
+        return await fetchRecordBySlug(filter.id, config);
+      } catch (error) {
+        return {
+          error: new Error(`Unable to load record: ${toErrorMessage(error)}`),
+        };
+      }
+    },
+  };
 }
