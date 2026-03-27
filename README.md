@@ -34,12 +34,18 @@ The containerized deployment plan lives in:
 
 The `web` service now runs Astro in Node standalone mode. Most pages remain statically prerendered, while `/my-record-collection` is server-rendered on demand from Strapi through Astro 6 live content collections and route caching.
 
+The repo now keeps separate Dockerfiles for the `web` image:
+
+- `Dockerfile.dev` keeps the current Node + `node_modules` layout for local parity
+- `Dockerfile` is production-only, runs `yarn workspaces focus --production`, builds Astro standalone output, and ships the focused production `node_modules` plus `dist/` into the final image
+
 ## Release Workflow
 
 This repo now uses conventional commits plus GitHub Actions-driven releases.
 
 - pushes to `main` run `semantic-release`, which calculates the next semver tag from conventional commits and creates the matching GitHub release
 - successful release-tag runs fan into the image workflow, which builds and pushes both the `web` and `strapi-cms` images to GitHub Container Registry (`ghcr.io`) for the newly created semver tag when one exists
+- the production `web` image is built from the root `Dockerfile`, which now only contains the focused production build path so CI does not build the dev variant
 - the `web` image no longer bakes record data in at build time; runtime Strapi access is configured through environment variables on the deployed container while Astro handles route caching in-process
 
 Conventional commit enforcement is installed via Husky on `yarn install`.
