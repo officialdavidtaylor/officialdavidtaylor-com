@@ -80,6 +80,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
+          target: runtime-prod
           platforms: ${{ env.IMAGE_PLATFORMS }}
           push: true
           tags: |
