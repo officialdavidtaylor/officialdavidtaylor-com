@@ -31,6 +31,7 @@ ENV PORT=4321
 
 WORKDIR /app
 
+COPY --from=deps-production --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 
 USER node

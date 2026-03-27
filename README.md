@@ -37,7 +37,7 @@ The `web` service now runs Astro in Node standalone mode. Most pages remain stat
 The repo now keeps separate Dockerfiles for the `web` image:
 
 - `Dockerfile.dev` keeps the current Node + `node_modules` layout for local parity
-- `Dockerfile` is production-only, runs `yarn workspaces focus --production`, builds Astro standalone output, and ships only `dist/` into the final image
+- `Dockerfile` is production-only, runs `yarn workspaces focus --production`, builds Astro standalone output, and ships the focused production `node_modules` plus `dist/` into the final image
 
 ## Release Workflow
 
