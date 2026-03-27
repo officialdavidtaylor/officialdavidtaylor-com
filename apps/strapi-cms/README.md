@@ -23,6 +23,11 @@ Build the admin panel:
 yarn build
 ```
 
+Docker image variants:
+
+- `apps/strapi-cms/Dockerfile.dev` keeps the full workspace install for dev/parity use
+- `apps/strapi-cms/Dockerfile` is production-only, focuses the workspace to `strapi-cms`, builds the admin/server output, and copies only the focused runtime files into the final image
+
 Start in production mode:
 
 ```bash
