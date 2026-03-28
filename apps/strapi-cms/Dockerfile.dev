@@ -33,4 +33,4 @@ USER node
 
 EXPOSE 1337
 
-CMD ["node", "/app/node_modules/@strapi/strapi/bin/strapi.js", "start"]
+CMD ["node", "./start.js"]

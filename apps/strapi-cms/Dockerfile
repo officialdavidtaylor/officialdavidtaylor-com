@@ -33,6 +33,7 @@ COPY --from=build --chown=node:node /app/yarn.lock ./yarn.lock
 COPY --from=build --chown=node:node /app/.yarnrc.yml ./.yarnrc.yml
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/strapi-cms/package.json ./apps/strapi-cms/package.json
+COPY --from=build --chown=node:node /app/apps/strapi-cms/start.js ./apps/strapi-cms/start.js
 COPY --from=build --chown=node:node /app/apps/strapi-cms/dist ./apps/strapi-cms/dist
 COPY --from=build --chown=node:node /app/apps/strapi-cms/public ./apps/strapi-cms/public
 COPY --from=build --chown=node:node /app/apps/strapi-cms/database ./apps/strapi-cms/database
@@ -44,4 +45,4 @@ USER node
 
 EXPOSE 1337
 
-CMD ["node", "/app/node_modules/@strapi/strapi/bin/strapi.js", "start"]
+CMD ["node", "./start.js"]
