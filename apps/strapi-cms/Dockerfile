@@ -26,8 +26,6 @@ FROM node:22-bookworm-slim AS runtime
 
 ENV NODE_ENV=production
 
-RUN corepack enable
-
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/package.json ./package.json
@@ -40,8 +38,10 @@ COPY --from=build --chown=node:node /app/apps/strapi-cms/public ./apps/strapi-cm
 COPY --from=build --chown=node:node /app/apps/strapi-cms/database ./apps/strapi-cms/database
 COPY --from=build --chown=node:node /app/apps/strapi-cms/favicon.png ./apps/strapi-cms/favicon.png
 
+WORKDIR /app/apps/strapi-cms
+
 USER node
 
 EXPOSE 1337
 
-CMD ["yarn", "workspace", "strapi-cms", "start"]
+CMD ["node", "/app/node_modules/@strapi/strapi/bin/strapi.js", "start"]
