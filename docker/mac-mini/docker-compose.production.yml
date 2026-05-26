@@ -94,7 +94,7 @@ services:
       - '127.0.0.1:${STRAPI_LOCAL_PORT:-1337}:1337'
 
   cloudflared:
-    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared:2026.2.1}
+    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared:2026.3.0}
     container_name: portfolio-cloudflared
     restart: unless-stopped
     command: tunnel --no-autoupdate run
