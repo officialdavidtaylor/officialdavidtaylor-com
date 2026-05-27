@@ -7,6 +7,11 @@ import { z } from 'astro/zod';
 const DEFAULT_RETRY_ATTEMPTS = 3;
 const PAGE_SIZE = 100;
 const RECORDS_COLLECTION_TAG = 'records';
+const RECORD_COVER_FORMAT = 'thumbnail';
+
+const strapiImageFormatSchema = z.object({
+  url: z.string().min(1),
+});
 
 const strapiRecordSchema = z.object({
   title: z.string().min(1),
@@ -16,6 +21,10 @@ const strapiRecordSchema = z.object({
     name: z.string().min(1),
   }),
   coverArt: z.object({
+    formats: z
+      .record(z.string(), strapiImageFormatSchema)
+      .nullable()
+      .optional(),
     url: z.string().min(1),
   }),
   giver: z.string().nullable(),
@@ -121,6 +130,12 @@ function toPublicAssetUrl(assetUrl: string, publicBaseUrl: string): string {
   return new URL(assetUrl, publicBaseUrl).toString();
 }
 
+function getOptimizedCoverUrl(record: StrapiRecord): string {
+  return (
+    record.coverArt.formats?.[RECORD_COVER_FORMAT]?.url ?? record.coverArt.url
+  );
+}
+
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -133,7 +148,10 @@ function toLiveRecordEntry(
     id: record.slug,
     data: {
       artistName: record.artist.name,
-      coverUrl: toPublicAssetUrl(record.coverArt.url, config.strapiPublicUrl),
+      coverUrl: toPublicAssetUrl(
+        getOptimizedCoverUrl(record),
+        config.strapiPublicUrl
+      ),
       giver: record.giver,
       receivedOn: record.receivedOn,
       slug: record.slug,
